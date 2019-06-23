@@ -6,41 +6,46 @@ public class SelectionManager : MonoBehaviour
     [SerializeField]
     private string selectionTag = "Selectable";
 
-    [SerializeField]
-    private Material highLightMaterial;
-
-    [SerializeField]
-    private Material defaultMaterial;
-
 
     private Transform selection;
 
+    private ISelectionResponse selectionResponse;
+
+
+    private void Awake() {
+        selectionResponse = GetComponent<ISelectionResponse>();
+    }
 
     private void Update()
     {
 
-        if(selection != null){
-            var selectionRenderer = selection.GetComponent<Renderer>(); 
-            selectionRenderer.material = defaultMaterial;
-            selection = null;
+        // Deselection/Selection Response
+        if (selection != null)
+        {
+            selectionResponse.OnDeselect(selection);
         }
 
+        #region Selection Determination
+        // Creating a Ray
         var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        selection = null;
 
-
-        RaycastHit hit;
-        if (Physics.Raycast(ray, out hit))
+        // Selection Determination
+        if (Physics.Raycast(ray, out var hit))
         {
             var selection = hit.transform;
-            if(selection.tag == selectionTag){
-                var selectionRenderer = selection.GetComponent<Renderer>();
-                if (selectionRenderer != null)
-                {
-                    selectionRenderer.material = highLightMaterial;
-                }
+            if (selection.CompareTag(selectionTag))
+            {
                 this.selection = selection;
             }
-            
+
+        }
+        #endregion
+
+        // Deselection/Selection Response
+        if (selection != null)
+        {
+            selectionResponse.OnSelect(selection);
         }
 
     }
